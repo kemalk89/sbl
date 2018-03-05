@@ -29,20 +29,22 @@ repositories {
 dependencies {
     compile("org.springframework.boot:spring-boot-starter-web")
     compile("org.springframework.boot:spring-boot-starter-data-jpa")
-    compile('org.liquibase:liquibase-core')
+    compile('org.liquibase:liquibase-core:3.4.1')
     compile("com.h2database:h2")
     compile("org.yaml:snakeyaml:1.12")
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
-Properties applicationProps = new Properties()
-applicationProps.load(new FileInputStream("src/main/resources/application.properties"))
-
 liquibase {
     activities {
         main {
-            changeLogFile 'src/main/resources/db/changelog/db.changelog-master.yaml'
+            Properties applicationProps = new Properties()
+            applicationProps.load(new FileInputStream("src/main/resources/application.properties"))
+
+            def changeLog = "src/main/resources/db/changelog/db.changelog-master.yaml"
+
+            changeLogFile changeLog
             url applicationProps.getProperty("spring.datasource.url")
             username applicationProps.getProperty("spring.datasource.username")
             password applicationProps.getProperty("spring.datasource.password")
@@ -50,6 +52,4 @@ liquibase {
             logLevel 'debug'
         }
     }
-
-    runList = "main"
 }
