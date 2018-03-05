@@ -2,7 +2,6 @@ group 'org.k'
 version '1.0-SNAPSHOT'
 
 apply plugin: 'java'
-apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'org.liquibase.gradle'
@@ -18,7 +17,7 @@ buildscript {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.10.RELEASE")
         classpath "org.liquibase:liquibase-gradle-plugin:1.2.4"
         classpath "org.yaml:snakeyaml:1.12"
-        classpath "com.h2database:h2:1.3.160"
+        classpath "com.h2database:h2:1.4.196"
     }
 }
 
@@ -29,27 +28,57 @@ repositories {
 dependencies {
     compile("org.springframework.boot:spring-boot-starter-web")
     compile("org.springframework.boot:spring-boot-starter-data-jpa")
-    compile('org.liquibase:liquibase-core:3.4.1')
-    compile("com.h2database:h2")
+    compile('org.liquibase:liquibase-core:3.5.5')
+    compile("com.h2database:h2:1.4.196")
     compile("org.yaml:snakeyaml:1.12")
+    compile group: 'org.liquibase.ext', name: 'liquibase-hibernate5', version: '3.6'
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
-liquibase {
-    activities {
-        main {
-            Properties applicationProps = new Properties()
-            applicationProps.load(new FileInputStream("src/main/resources/application.properties"))
+Properties appProps = new Properties()
+appProps.load(new FileInputStream("src/main/resources/application.properties"))
 
-            def changeLog = "src/main/resources/db/changelog/db.changelog-master.yaml"
-
-            changeLogFile changeLog
-            url applicationProps.getProperty("spring.datasource.url")
-            username applicationProps.getProperty("spring.datasource.username")
-            password applicationProps.getProperty("spring.datasource.password")
-            driver applicationProps.getProperty("spring.datasource.driver-class-name")
-            logLevel 'debug'
-        }
+task deleteH2Database(type: Delete) {
+    group "sblh"
+    delete fileTree('db') {
+        include '**/*.db'
     }
+}
+
+task deleteChangelogs(type: Delete) {
+    group "sblh"
+    delete fileTree('src/main/resources/db/changelog') {
+        include '**/*.yaml'
+    }
+}
+
+task generateLiquibaseChangelog(type: JavaExec) {
+    group "sblh"
+
+    classpath sourceSets.main.runtimeClasspath
+    main = "liquibase.integration.commandline.Main"
+
+    args "--changeLogFile=src/main/resources/db/changelog/base.yaml"
+    args "--url=" + appProps.getProperty("spring.datasource.url")
+    args "--username=" + appProps.getProperty("spring.datasource.username")
+    args "--password=" + appProps.getProperty("spring.datasource.password")
+    args "--driver=" + appProps.getProperty("spring.datasource.driver-class-name")
+    args "--logLevel=debug"
+    args "generateChangelog"
+}
+
+task generateLiquibaseDiff(type: JavaExec) {
+    group "sblh"
+
+    classpath sourceSets.main.runtimeClasspath
+    main = "liquibase.integration.commandline.Main"
+
+    args "--changeLogFile=src/main/resources/db/changelog/changelog-diff.yaml"
+    args "--referenceUrl=hibernate:spring:com.k?dialect=org.hibernate.dialect.H2Dialect"
+    args "--url=" + appProps.getProperty("spring.datasource.url")
+    args "--username=" + appProps.getProperty("spring.datasource.username")
+    args "--password=" + appProps.getProperty("spring.datasource.password")
+    args "--driver=" + appProps.getProperty("spring.datasource.driver-class-name")
+    args "diffChangeLog"
 }

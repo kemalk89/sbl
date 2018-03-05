@@ -6,6 +6,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.xml.crypto.Data;
+import java.util.Date;
 
 @Entity
 @Table(name = "task")
