@@ -36,14 +36,18 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
+Properties applicationProps = new Properties()
+applicationProps.load(new FileInputStream("src/main/resources/application.properties"))
+
 liquibase {
     activities {
         main {
             changeLogFile 'src/main/resources/db/changelog/db.changelog-master.yaml'
-            url 'jdbc:h2:file:~/sblh;DB_CLOSE_ON_EXIT=FALSE'
-            username 'sa'
-            password ''
-            driver 'org.h2.Driver'
+            url applicationProps.getProperty("spring.datasource.url")
+            username applicationProps.getProperty("spring.datasource.username")
+            password applicationProps.getProperty("spring.datasource.password")
+            driver applicationProps.getProperty("spring.datasource.driver-class-name")
+            logLevel 'debug'
         }
     }
 

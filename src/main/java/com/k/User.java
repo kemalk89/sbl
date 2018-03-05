@@ -5,7 +5,10 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import java.util.List;
 
 @Entity
 @Table(name = "user")
@@ -21,6 +24,10 @@ public class User {
 
     @Column(name = "password", nullable = false)
     private String password;
+
+    @OneToMany
+    @JoinColumn(name = "user_id")
+    private List<UserRole> roles;
 
     public Long getId() {
         return id;
