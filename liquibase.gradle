@@ -1,0 +1,51 @@
+dependencies {
+    compile group: 'org.liquibase.ext', name: 'liquibase-hibernate5', version: '3.6'
+    compile group: 'org.yaml', name: 'snakeyaml', version: '1.12'
+}
+
+Properties appProps = new Properties()
+appProps.load(new FileInputStream("src/main/resources/application.properties"))
+
+task deleteH2Database(type: Delete) {
+    group "sblh"
+    delete fileTree('db') {
+        include '**/*.db'
+    }
+}
+
+task deleteChangelogs(type: Delete) {
+    group "sblh"
+    delete fileTree('src/main/resources/db/changelog') {
+        include '**/*.yaml'
+    }
+}
+
+task generateLiquibaseChangelog(type: JavaExec) {
+    group "sblh"
+
+    classpath sourceSets.main.runtimeClasspath
+    main = "liquibase.integration.commandline.Main"
+
+    args "--changeLogFile=src/main/resources/db/changelog/base.yaml"
+    args "--url=" + appProps.getProperty("spring.datasource.url")
+    args "--username=" + appProps.getProperty("spring.datasource.username")
+    args "--password=" + appProps.getProperty("spring.datasource.password")
+    args "--driver=" + appProps.getProperty("spring.datasource.driver-class-name")
+    args "--logLevel=debug"
+    args "generateChangelog"
+}
+
+task generateLiquibaseDiff(type: JavaExec) {
+    group "sblh"
+
+    classpath sourceSets.main.runtimeClasspath
+    main = "liquibase.integration.commandline.Main"
+
+    args "--changeLogFile=src/main/resources/db/changelog/changelog-diff.yaml"
+    args "--referenceUrl=hibernate:spring:com.k?dialect=org.hibernate.dialect.H2Dialect"
+    args "--url=" + appProps.getProperty("spring.datasource.url")
+    args "--username=" + appProps.getProperty("spring.datasource.username")
+    args "--password=" + appProps.getProperty("spring.datasource.password")
+    args "--driver=" + appProps.getProperty("spring.datasource.driver-class-name")
+    args "diffChangeLog"
+}
